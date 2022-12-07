@@ -1,0 +1,43 @@
+version: "3.1"
+services:
+  elasticsearch:
+    image: elasticsearch:6.8.23
+    container_name: es-node-1
+    environment:
+      - node.name=es-node-1
+      - node.master=true
+      - node.data=true
+      - http.cors.enabled=true
+      - http.cors.allow-origin=*
+#      - "ES_JAVA_OPTS=-Xms4g -Xmx4g"
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    restart: always
+    volumes:
+      # chmod 777 ../data/elasticsearch/data
+      # echo "vm.max_map_count=262144" >> /etc/sysctl.conf && sysctl -p
+      - ../data/elasticsearch/data:/usr/share/elasticsearch/data:rw
+      - ../data/elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+    networks:
+      elasticsearch:
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+  kibana:
+    image: kibana:6.8.23
+    container_name: kibana
+    restart: always
+    environment:
+      - XPACK_MONITORING_ENABLED=true
+    ports:
+      - "5601:5601"
+    volumes:
+      - ../data/elasticsearch/config/kibana.yml:/usr/share/kibana/config/kibana.yml
+    depends_on:
+      - elasticsearch
+    networks:
+      elasticsearch:
+networks:
+  elasticsearch:
+
+
+
