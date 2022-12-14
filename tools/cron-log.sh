@@ -9,7 +9,7 @@ step_exec() {
     USER="$1"
     shift
     {
-      RESULT=$(su - "$USER" -s /bin/bash -c "$*" 2>&1);
+      RESULT=$(su -m "$USER" -s /bin/bash -c "$*" 2>&1);
       RESULT_CODE="$?";
       if [[ "$RESULT_CODE" == 0 ]]; then
         RESULT_TXT="SUCCESS"
