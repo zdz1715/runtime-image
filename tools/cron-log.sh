@@ -3,13 +3,12 @@
 # 初始化变量
 EXEC_USER='root'
 CRON_PID=$(cat /var/run/crond.pid)
-
+IS_LOGIN='--preserve-environment'
 
 step_exec() {
-    USER="$1"
     shift
     {
-      RESULT=$(su -m "$USER" -s /bin/bash -c "$*" 2>&1);
+      RESULT=$(su "$IS_LOGIN $EXEC_USER" -s /bin/bash -c "$*" 2>&1);
       RESULT_CODE="$?";
       if [[ "$RESULT_CODE" == 0 ]]; then
         RESULT_TXT="SUCCESS"
@@ -30,10 +29,11 @@ usage() {
     Options:
       -h, --help                    帮助
       -u, --user string             执行用户
+      -l, --login                   是否登录
     "
 }
 
-TEMP=$(getopt -o uh --long help,user -- "$@" 2>/dev/null)
+TEMP=$(getopt -o uhl --long help,user,login -- "$@" 2>/dev/null)
 [ $? != 0 ]  && usage && exit 1
 
 while :; do
@@ -45,6 +45,9 @@ while :; do
     -u|--user)
       EXEC_USER=$2; shift 2
       ;;
+    -l|--login)
+      IS_LOGIN="--login"; shift 1
+      ;;
     --)
       break
       ;;
@@ -54,6 +57,6 @@ while :; do
 done
 
 [[ -z "$*" ]] && usage && exit 1
-step_exec "$EXEC_USER" "$@"
+step_exec "$@"
 
 
