@@ -77,8 +77,9 @@ do
   fi
 done
 
-# 修改nginx的权限
+# 修改权限
 chown -R www-data:www-data /var/lib/nginx
+chown -R www-data:www-data /var/www
 
 # 只执行命令行
 if [ "$is_exec_cmd" = 1 ]; then
