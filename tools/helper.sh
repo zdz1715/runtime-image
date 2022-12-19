@@ -44,7 +44,10 @@ log_command()
 enable_supervisor_conf() {
   name="$1"
   conf_d="$2"
-  mv "${conf_d}/${name}.unused" "${conf_d}/${name}.conf"
+  if [ -f "${conf_d}/${name}.unused" ]; then
+    mv "${conf_d}/${name}.unused" "${conf_d}/${name}.conf"
+  fi
+
 }
 
 parse_nginx_env() {
@@ -190,18 +193,27 @@ nginx_headers() {
 
 print_nginx_conf() {
 
-log_info "$NGINX_CUSTOM_VARS_CONF"
-cat "$NGINX_CUSTOM_VARS_CONF"
+  if [ -f "$NGINX_CUSTOM_VARS_CONF" ]; then
+    log_info "$NGINX_CUSTOM_VARS_CONF"
+    cat "$NGINX_CUSTOM_VARS_CONF"
+  fi
 
-echo
 
-log_info "$NGINX_CUSTOM_CONF"
-cat "$NGINX_CUSTOM_CONF"
+  echo
 
-echo
+  if [ -f "$NGINX_CUSTOM_CONF" ]; then
+    log_info "$NGINX_CUSTOM_CONF"
+    cat "$NGINX_CUSTOM_CONF"
+  fi
 
-log_info "$NGINX_DEFAULT_CONF"
-cat "$NGINX_DEFAULT_CONF"
 
-echo
+
+  echo
+
+  if [ -f "$NGINX_DEFAULT_CONF" ]; then
+    log_info "$NGINX_DEFAULT_CONF"
+    cat "$NGINX_DEFAULT_CONF"
+  fi
+
+  echo
 }
