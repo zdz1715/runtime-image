@@ -135,14 +135,15 @@ ENV ENABLE_OPCACHE=true
 > Dockerfile
 ```shell
 # 默认以root用户运行，若想以www-data运行，则写成这样：[ "su - www-data -s /bin/bash -c '$otherCommand'" ]
-CMD [ "cron", "laravel-queue", "$otherCommand" ]
+CMD [ "cron", "laravel-queue", "chown-www", "$otherCommand" ]
 ```
 
-| command         | 描述                                                                                                                                                             | 
-|:----------------|:---------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| cron            | 开启cron常驻进程                                                                                                                                                     |
-| laravel-queue   | 开启常驻进程：`php /var/www/artisan queue:work --sleep=3 --tries=3 --timeout=120`, [参考](https://learnku.com/docs/laravel/9.x/queues/12236#supervisor-configuration) |
-| $otherCommand   | 其他执行命令，Dockerfile示例： `CMD ["echo hello", "echo world"]`                                                                               |
+| command            | 阻塞  | 描述                                                                                                                                                           | 
+|:-------------------|-----|:-------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| cron               | √   | 开启cron常驻进程                                                                                                                                                   |
+| chown-www          | √   | 执行`chown -R www-data:www-data /var/www`                                                                                                                |
+| laravel-queue      | √   | 开启常驻进程：`php /var/www/artisan queue:work --sleep=3 --tries=3 --timeout=120`, [参考](https://learnku.com/docs/laravel/9.x/queues/12236#supervisor-configuration) |
+| $otherCommand      | x   | 其他执行命令，Dockerfile示例： `CMD ["echo hello", "echo world"]`                                                                                                      |
 
 ## 自定义配置文件
 > 在`Dockerfile`中添加以下语句
