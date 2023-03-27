@@ -10,30 +10,40 @@ step()
 
 log()
 {
-  echo "$1：$2"
+  echo "[$(date +%H:%I:%S)] $1 $2"
 }
 
 log_error()
 {
-  log "[error]" "$1"
+  log "[ERROR]" "$*"
+}
+
+log_exit()
+{
+  log "[ERROR]" "$*"
+  exit 1
 }
 
 log_info()
 {
-  log "[info]" "$1"
+  log "[INFO]" "$*"
 }
 
 log_success()
 {
-  log "[success]" "$1"
+  log "[SUCCESS]" "$*"
+}
+
+log_warn()
+{
+  log "[WARN]" "$*"
 }
 
 log_command()
 {
-  log "[command]" "$*"
+  log "[COMMAND]" "$*"
   sh -c "$*"
 }
-
 
 
 

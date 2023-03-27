@@ -299,6 +299,9 @@ install_php_ext_from_tgz() {
     rdkafka)
       sh_c "$install_tool librdkafka1 librdkafka-dev"
     ;;
+    pdo_sqlsrv)
+        sh_c "$install_tool unixodbc-dev"
+      ;;
     xlswriter)
       sh_c "$install_tool zlib1g-dev"
     ;;
@@ -423,16 +426,21 @@ install_php_ext() {
   IFS="$OLD_IFS"
 
   echo
-  echo "============================================"
-  echo "PHP version                           : $php_version"
-  echo "Extra Extensions                      : $*"
-  echo "Work directory                        : $(pwd)"
-  echo "Extra Extensions directory            : ${php_ext_d}"
-  echo "================== result =================="
-  echo "install successfully : ${php_ext_suc_list}"
-  echo "install failed       : ${php_ext_err_list}"
-  echo "============================================"
+  echo "========================================================================================"
+  echo "PHP version: $php_version"
+  echo "Extra Extensions: $*"
+  echo "Work directory: $(pwd)"
+  echo "Extra Extensions directory: ${php_ext_d}"
+  echo "================== result =============================================================="
+  echo "install successfully: ${php_ext_suc_list}"
+  echo "install failed: ${php_ext_err_list}"
+  echo "========================================================================================"
   echo
+
+  if [ -n "${php_ext_err_list}" ]; then
+    echo "install failed: ${php_ext_err_list}"
+    exit 1
+  fi
 }
 
 exit_miss_param() {
@@ -476,6 +484,7 @@ do_install() {
       echo "info: install php${php_version} extra extensions: ${php_ext}"
       install_php_ext "$php_ext"
       sh_c "$install_clean"
+      sh_c "rm -rf $php_ext_d"
     ;;
     clean)
       sh_c "$install_clean"

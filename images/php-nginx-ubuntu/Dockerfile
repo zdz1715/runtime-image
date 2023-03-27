@@ -82,8 +82,7 @@ COPY images/php-nginx-ubuntu/ext/$PHP_VERSION /tmp/php-extra-ext
 
 RUN cp /etc/php/fpm/*.conf ${PHP_ETC}/fpm/pool.d; \
     ln -sf $ZZ_TOOLS/cron-log.sh /usr/local/bin/cron-log; \
-    $ZZ_TOOLS/install.sh --action php-ext --php-ext-dir /tmp/php-extra-ext; \
-    rm -rf /tmp/php-extra-ext;
+    $ZZ_TOOLS/install.sh --action php-ext --php-ext-dir /tmp/php-extra-ext
 
 EXPOSE 80
 

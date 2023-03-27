@@ -12,7 +12,11 @@ PHP_EXTRA_EXTENSIONS ?= "bcmath curl gd mbstring mongodb mysql redis zip"
 COMPOSER_MIRROR ?= "https://mirrors.aliyun.com/composer/"
 PIP_MIRROR ?= "https://mirrors.aliyun.com/pypi/simple/"
 
-c_args = --build-arg TZ=$(TZ) --build-arg MIRROR=$(MIRROR) --build-arg PHP_EXTRA_EXTENSIONS=$(PHP_EXTRA_EXTENSIONS) --build-arg COMPOSER_MIRROR=$(COMPOSER_MIRROR) --build-arg PIP_MIRROR=$(PIP_MIRROR) --build-arg NPM_MIRROR=$(NPM_MIRROR)
+c_args = --build-arg TZ=$(TZ) \
+	--build-arg MIRROR=$(MIRROR) \
+	--build-arg COMPOSER_MIRROR=$(COMPOSER_MIRROR) \
+	--build-arg PIP_MIRROR=$(PIP_MIRROR) \
+	--build-arg NPM_MIRROR=$(NPM_MIRROR)
 
 
 .PHONY: help
@@ -24,9 +28,6 @@ docker-build:
 	chmod +x hack/docker-build.sh
 
 ##@ Build image
-
-.PHONY: build
-build:docker-build ubuntu-22.04 php7.4-nginx-ubuntu php8.1-nginx-ubuntu php7.4-nginx-ubuntu-oci8 php8.1-nginx-ubuntu-oci8 html-nginx-alpine ## Build images/*
 
 
 .PHONY: ubuntu22.04
@@ -44,20 +45,24 @@ html-nginx-alpine:docker-build ## Build images/html-nginx-alpine
 .PHONY: php-nginx-ubuntu
 php-nginx-ubuntu:php7.4-nginx-ubuntu php8.1-nginx-ubuntu php7.4-nginx-ubuntu-oci8 php8.1-nginx-ubuntu-oci8 php7.4-nginx-ubuntu-puppeteer php8.1-nginx-ubuntu-puppeteer## Build images/php-nginx-ubuntu all images
 
-php7_nginx_ubuntu_args = --build-arg PHP_VERSION=7.4
-php7_nginx_ubuntu_args += $(c_args)
+php7.4_nginx_ubuntu_args = $(c_args) \
+						 --build-arg PHP_VERSION=7.4 \
+						 --build-arg PHP_EXTRA_EXTENSIONS=$(PHP_EXTRA_EXTENSIONS)
 
-php8_nginx_ubuntu_args = --build-arg PHP_VERSION=8.1
-php8_nginx_ubuntu_args += $(c_args)
+
+
+php8.1_nginx_ubuntu_args = $(c_args) \
+						 --build-arg PHP_VERSION=8.1 \
+						 --build-arg PHP_EXTRA_EXTENSIONS=$(PHP8.1_EXTRA_EXTENSIONS)
 
 .PHONY: php7.4-nginx-ubuntu
 php7.4-nginx-ubuntu:docker-build ## Build images/php-nginx-ubuntu by php version: 7.4
-	REGISTRY=$(IMAGE_REGISTRY) VERSION="php7.4-nginx-ubuntu" ARGS='$(php7_nginx_ubuntu_args)' hack/docker-build.sh php-nginx-ubuntu
+	REGISTRY=$(IMAGE_REGISTRY) VERSION="php7.4-nginx-ubuntu" ARGS='$(php7.4_nginx_ubuntu_args)' hack/docker-build.sh php-nginx-ubuntu
 
 
 .PHONY: php8.1-nginx-ubuntu
 php8.1-nginx-ubuntu:docker-build ## Build images/php-nginx-ubuntu by php version: 8.1
-	REGISTRY=$(IMAGE_REGISTRY) VERSION="php8.1-nginx-ubuntu" ARGS='$(php8_nginx_ubuntu_args)' hack/docker-build.sh php-nginx-ubuntu
+	REGISTRY=$(IMAGE_REGISTRY) VERSION="php8.1-nginx-ubuntu" ARGS='$(php8.1_nginx_ubuntu_args)' hack/docker-build.sh php-nginx-ubuntu
 
 .PHONY: php7.4-nginx-ubuntu-oci8
 php7.4-nginx-ubuntu-oci8:docker-build ## Build images/php-nginx-ubuntu-oci8 by php version: 7.4
@@ -178,3 +183,5 @@ php8.1-nginx-ubuntu-puppeteer_push: ## Push php8.1-nginx-ubuntu-puppeteer
 	docker push $(IMAGE_REGISTRY):php8.1-nginx-ubuntu-puppeteer
 
 
+test1:
+	echo $(php7.4_nginx_ubuntu_args)
