@@ -150,16 +150,25 @@ case "$lsb_dist" in
      php-fpm_nginx_composer)
 
         sh_c "$install_init"
-        sh_c "$install_tool ca-certificates software-properties-common gpg-agent"
+        sh_c "$install_tool ca-certificates curl software-properties-common gpg-agent"
+        # ppa ppa:ondrej/php
         ppa_php_file="/etc/apt/sources.list.d/ondrej-ubuntu-php-jammy.list"
         if [ ! -f "$ppa_php_file" ]; then
           sh_c "add-apt-repository -y ppa:ondrej/php"
         fi
+
         if [ -n "$proxy" ]; then
           sh_c "sed -i 's@https://ppa.launchpadcontent.net/@${proxy}/@g' $ppa_php_file"
           sh_c "$install_init"
         fi
+
+        # microsoft
+        sh_c "curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor --yes -o /etc/apt/trusted.gpg.d/microsoft.gpg"
+        sh_c "curl https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/prod.list > /etc/apt/sources.list.d/mssql-release.list"
+
+
         sh_c "$install_remove software-properties-common gpg-agent"
+
       ;;
     esac
   ;;
@@ -299,8 +308,8 @@ install_php_ext_from_tgz() {
     rdkafka)
       sh_c "$install_tool librdkafka1 librdkafka-dev"
     ;;
-    pdo_sqlsrv)
-        sh_c "$install_tool unixodbc-dev"
+    pdo_sqlsrv|sqlsrv)
+        sh_c "ACCEPT_EULA=Y $install_tool unixodbc-dev msodbcsql18"
       ;;
     xlswriter)
       sh_c "$install_tool zlib1g-dev"
@@ -471,7 +480,7 @@ do_install() {
         exit_miss_param "--php-version"
       fi
       sh_c "$install_init"
-      sh_c "$install_tool supervisor nginx unzip cron curl dos2unix"
+      sh_c "$install_tool supervisor nginx unzip cron dos2unix lsb-release"
       sh_c "$install_tool php${php_version}-fpm"
       install_composer
       sh_c "$install_clean"
