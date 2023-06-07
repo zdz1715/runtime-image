@@ -27,3 +27,9 @@ $res = $pdo->query($sql);
 while ($row = $res->fetch()){
     print_r($row);
 }
+
+
+
+
+
+

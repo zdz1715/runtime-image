@@ -73,6 +73,8 @@ while [ $# -gt 0 ]; do
 	shift $(( $# > 0 ? 1 : 0 ))
 done
 
+
+# 系统软件源
 case "$mirror" in
 	Aliyun)
 		MIRROR_URL="mirrors.aliyun.com"

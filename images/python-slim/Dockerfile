@@ -3,7 +3,7 @@ ARG PYTHON_VERSION=3.10
 FROM python:${PYTHON_VERSION}-slim
 
 ARG TZ=Asia/Shanghai
-ARG MIRROR=Huawei
+ARG MIRROR=Aliyun
 ARG PIP_MIRROR="https://mirrors.aliyun.com/pypi/simple/"
 
 COPY tools /usr/local/zz-tools
