@@ -83,7 +83,7 @@ case "$mirror" in
 		MIRROR_URL="repo.huaweicloud.com"
 		;;
   *)
-    MIRROR_URL="mirrors.aliyun.com"
+    MIRROR_URL="repo.huaweicloud.com"
     ;;
 esac
 
