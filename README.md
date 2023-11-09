@@ -6,4 +6,15 @@
 -  Make
 -  Docker Desktop >= 2.1.0
 
-
+## 项目结构
+```text
+├── Makefile  
+├── README.md
+├── src // 镜像构建源码，构建顺序: base -> main
+│   ├── base // 基础镜像目录
+│   │   └── ubuntu // 镜像名称
+│   │       └── 22.04 // 镜像tag
+│   └── main // 主要镜像目录
+│       └── go-builder // 镜像名称
+│           └── 1.21 // 镜像tag
+```
