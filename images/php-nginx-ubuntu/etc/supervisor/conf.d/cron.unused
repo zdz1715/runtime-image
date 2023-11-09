@@ -1,7 +1,0 @@
-[program:cron]
-user=root
-command=cron -f
-autostart=true
-autorestart=true
-redirect_stderr=true
-stdout_logfile=${SUPERVISOR_LOG_DIR}/cron.log
