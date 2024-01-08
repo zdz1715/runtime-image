@@ -4,14 +4,14 @@
 
 ## 构建工具
 -  Make
--  Docker Desktop >= 2.1.0
+-  Docker Desktop
 
 ## 项目结构
 ```
 ├── Makefile  
 ├── README.md
-├── src // 镜像构建源码，构建顺序: base -> main
-│   ├── base // 基础镜像目录
+├── images // 镜像构建源码，构建顺序: basic -> main
+│   ├── basic // 基础镜像目录
 │   │   ├── ubuntu // 镜像名称
 │   │   │   ├── 22.04 // 镜像tag
 │   │   │   │   └── Dockerfile
@@ -24,6 +24,4 @@
 │       │   │── ...
 │       │── ...
 ```
-```text
-
-```
+## 构建

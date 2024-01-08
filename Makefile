@@ -1,6 +1,11 @@
-# 工作目录
-WORK_DIR=$(shell pwd)
-# 镜像仓库地址
+envFile := $(wildcard .env)
+
+# 加载环境变量
+ifneq ($(envFile),)
+	include $(envFile)
+endif
+
+# 镜像仓库地址,后缀必须有‘/’
 IMAGE_REGISTRY ?= ""
 # 构建多平台
 PLATFORM ?= "linux/amd64,linux/arm64"
@@ -8,6 +13,23 @@ PLATFORM ?= "linux/amd64,linux/arm64"
 BUILDER ?= "multi-platform"
 # 使用的dockerfile文件名称
 DOCKERFILE_FILENAME ?= "Dockerfile"
+
+# 工作目录
+WORK_DIR=$(shell pwd)/images
+
+# 时区
+TZ ?= "Asia/Shanghai"
+# 软件源
+#MIRROR_URL ?= "mirrors.aliyun.com"
+#NPM_REGISTRY ?= "http://registry.npmmirror.com"
+MIRROR_URL ?= ""
+NPM_REGISTRY ?= ""
+
+build_args = --progress=plain \
+	--build-arg IMAGE_REGISTRY=$(IMAGE_REGISTRY) \
+	--build-arg TZ=$(TZ) \
+	--build-arg MIRROR_URL=$(MIRROR_URL) \
+	--build-arg NPM_REGISTRY=$(NPM_REGISTRY)
 
 PLATFORM_ARRAY := $(shell echo $(PLATFORM) | awk 'BEGIN {RS=","} {print}')
 .PHONY: help
@@ -19,74 +41,36 @@ help: ## Display this help.
 builder:
 	@echo "> Print builder info: $(BUILDER)"; \
 	if ! docker buildx inspect $(BUILDER); then \
-  		echo "> Create builder: $(BUILDER)"; \
+		echo "> Create builder: $(BUILDER)"; \
   		docker buildx create --bootstrap --name=$(BUILDER) --platform=$(PLATFORM) --driver=docker-container; \
-  	fi
+	fi
+
+.PHONY: basic
+basic: ## Build basic images.
+	@REGISTRY=$(IMAGE_REGISTRY) CONTEXT=$(WORK_DIR) SRC_DIR=$(WORK_DIR)/basic/ubuntu FORCE=true ./docker-build.sh $(build_args)
+	@REGISTRY=$(IMAGE_REGISTRY) CONTEXT=$(WORK_DIR) SRC_DIR=$(WORK_DIR)/basic ./docker-build.sh $(build_args)
 
 .PHONY: build
-build: ## Build images.
-	$(call docker-build,$(WORK_DIR),"--progress=plain")
+build: basic ## Build all images.
+	@REGISTRY=$(IMAGE_REGISTRY) CONTEXT=$(WORK_DIR) SRC_DIR=$(WORK_DIR)/main ./docker-build.sh $(build_args)
 
-
-.PHONY: build.arch
-build.arch: builder ## Build multi-architecture images.
-	$(call docker-build,$(WORK_DIR),"--progress=plain --builder=$(BUILDER) --platform=$(PLATFORM) --load")
 
 .PHONY: %.build
-%.build: ## Build specified image. e.g., sonar-scanner.build sonar-scanner:5-alpine.build or sonar-scanner/5-alpine.build
-	$(call docker-build,"$(WORK_DIR)/$*","--progress=plain")
-
-.PHONY: %.build.arch
-%.build.arch: builder## Build specified multi-architecture image. e.g., sonar-scanner.build.arch sonar-scanner:5-alpine.build.arch or sonar-scanner/5-alpine.build.arch
-	$(call docker-build,"$(WORK_DIR)/$*","--progress=plain --builder=$(BUILDER) --platform=$(PLATFORM) --load")
+%.build: ## Build specified image. e.g., basic/ubuntu:22.04.build or basic/ubuntu/22.04.build
+	@REGISTRY=$(IMAGE_REGISTRY) CONTEXT=$(WORK_DIR) SRC_DIR=$(WORK_DIR)/$* FORCE=true ./docker-build.sh $(build_args)
 
 ##@ Push image
-.PHONY: push
-push: ## Build and push images.
-	$(call docker-build,$(WORK_DIR),"--progress=plain --push")
+
+.PHONY: basic.push
+basic.push: ## Build and push multi-architecture basic images.
+	@REGISTRY=$(IMAGE_REGISTRY) CONTEXT=$(WORK_DIR) SRC_DIR=$(WORK_DIR)/basic/ubuntu FORCE=true ./docker-build.sh $(build_args) --push --builder=$(BUILDER) --platform=$(PLATFORM)
+	@REGISTRY=$(IMAGE_REGISTRY) CONTEXT=$(WORK_DIR) SRC_DIR=$(WORK_DIR)/basic ./docker-build.sh $(build_args) --push --builder=$(BUILDER) --platform=$(PLATFORM)
 
 .PHONY: push
-push.arch: ## Build and push multi-architecture images.
-	$(call docker-build,$(WORK_DIR),"--progress=plain --push --builder=$(BUILDER) --platform=$(PLATFORM)")
+push: basic.push ## Build and push multi-architecture images.
+	@REGISTRY=$(IMAGE_REGISTRY) CONTEXT=$(WORK_DIR) SRC_DIR=$(WORK_DIR)/main ./docker-build.sh $(build_args) --push --builder=$(BUILDER) --platform=$(PLATFORM)
 
 .PHONY: %.push
-%.push: ## Build and push specified image. e.g., sonar-scanner.push sonar-scanner:5-alpine.push or sonar-scanner/5-alpine.push
-	$(call docker-build,"$(WORK_DIR)/$*","--progress=plain --push")
+%.push: ## Build and push specified multi-architecture image. e.g., basic/ubuntu:22.04.push or basic/ubuntu/22.04.push
+	@REGISTRY=$(IMAGE_REGISTRY) CONTEXT=$(WORK_DIR) SRC_DIR=$(WORK_DIR)/$* FORCE=true ./docker-build.sh $(build_args) --push --builder=$(BUILDER) --platform=$(PLATFORM)
 
-.PHONY: %.push.arch
-%.push.arch: builder## Build and push specified multi-architecture image. e.g., sonar-scanner.push.arch sonar-scanner:5-alpine.push.arch or sonar-scanner/5-alpine.push.arch
-	$(call docker-build,"$(WORK_DIR)/$*","--progress=plain --push  --builder=$(BUILDER) --platform=$(PLATFORM)")
-
-
-define docker-build
-@image_dir=$1; \
-extra_args=$2; \
-image_dir=$${image_dir//://}; \
-if [ ! -d $$image_dir ]; then \
-	echo "$$image_dir: No such file or directory"; \
-	exit 1; \
-fi; \
-dockerfile_paths=$$(find $$image_dir -type f -name $(DOCKERFILE_FILENAME)); \
-dockerfile_count=$$(echo $$(echo $$dockerfile_paths | wc -w)); \
-fail_count=0; \
-echo "> Found $$dockerfile_count dockerfiles in $$image_dir\n$$dockerfile_paths"; \
-echo "> Start build..."; \
-for path in $$dockerfile_paths; do \
-	name=$$(echo $$path | awk 'BEGIN {FS="/"} { printf "%s:%s", $$(NF-2), $$(NF-1) }'); \
-	name=$${name///:}; \
-	name=$${name//./}; \
-	if [ -n $(IMAGE_REGISTRY) ]; then \
-		name="$(IMAGE_REGISTRY)/$$name"; \
-	fi; \
-	command="docker buildx build -t $$name -f $$path $$extra_args ."; \
-	echo "[$$path] $$command"; \
-	if ! eval $$command; then \
-	  fail_count=$$(expr $$fail_count + 1); \
-	  failPath="$$failPath\n$$path"; \
-	fi; \
-done; \
-echo "> Total: $$dockerfile_count success: $$(expr $$dockerfile_count - $$fail_count) fail: $$fail_count"; \
-if [ ! -z $$failPath ]; then \
-	echo "> Failed dockerfiles$$failPath"; \
-fi
-endef
